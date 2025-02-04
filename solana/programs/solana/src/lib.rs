@@ -17,6 +17,11 @@ pub mod solana_data_storage {
         storage.value = new_value;
         Ok(())
     }
+
+    pub fn get_value(ctx: Context<GetValue>) -> Result<u64> {
+        let storage = &ctx.accounts.storage;
+        Ok(storage.value)
+    }
 }
 
 #[derive(Accounts)]
