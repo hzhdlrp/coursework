@@ -2,6 +2,7 @@ import telebot
 from telebot import types
 import os
 from dotenv import load_dotenv
+import asyncio
 
 load_dotenv()
 
@@ -14,6 +15,7 @@ CONTRACT_ADDRESS = os.getenv('ADDRESS')
 commands = ['записать в eth', 'прочитать из eth', 'записать в sol', 'прочитать из sol']
 
 from eth import read_key, write_key, CONTRACT_ABI, web3, contract
+from sol import call_smart_contract_get, call_smart_contract_set
 
 bot = telebot.TeleBot(os.getenv('TOKEN'))
 
@@ -28,10 +30,11 @@ def read_from_eth():
     return f"записано значение {number}"
 
 def write_to_sol(number):
-    return f"записано число {number}"
+    logs = asyncio.run(call_smart_contract_set(number))
+    return f"записано число {number}", logs
 
 def read_from_sol():
-    number = 5
+    number = asyncio.run(call_smart_contract_get())
     return f"записано значение {number}"
 
 def main_menu():
@@ -72,7 +75,7 @@ def handle_message(message):
         bot.send_message(message.chat.id, "Выберите действие:", reply_markup=sol_menu())
     elif message.text == 'Назад':
         bot.send_message(message.chat.id, "Выберите раздел:", reply_markup=main_menu())
-    if message.text == 'Записать в eth':
+    elif message.text == 'Записать в eth':
         user_data[chat_id] = 'eth'
         bot.send_message(chat_id, 'Введите число')
     elif message.text == 'Записать в sol':
@@ -86,20 +89,21 @@ def handle_message(message):
         err_mess = "Это не число! Пожалуйста, введите число."
         if user_data.get(chat_id) == 'eth':
             try:
-                bot.send_message(chat_id,'подождите, пожалуйста')
+                bot.send_message(chat_id, 'подождите, пожалуйста')
                 number = int(message.text)
                 text, logs = write_to_eth(number)
-                for log in logs:
-                    bot.send_message(chat_id, log)
+                bot.send_message(chat_id, logs)
                 bot.send_message(chat_id, text)
                 user_data[chat_id] = None
             except ValueError:
                 bot.send_message(chat_id, err_mess)
         elif user_data.get(chat_id) == 'sol':
             try:
-                bot.send_message(chat_id,'подождите, пожалуйста')
+                bot.send_message(chat_id, 'подождите, пожалуйста')
                 number = int(message.text)
-                bot.send_message(chat_id, write_to_sol(number))
+                text, logs = write_to_sol(number)
+                bot.send_message(chat_id, logs)
+                bot.send_message(chat_id, text)
                 user_data[chat_id] = None
             except ValueError:
                 bot.send_message(chat_id, err_mess)
