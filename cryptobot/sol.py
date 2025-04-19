@@ -76,12 +76,6 @@ async def call_smart_contract_set(new_value: int):
 
         response = await client.send_raw_transaction(transaction.serialize(), opts=TxOpts(skip_confirmation=False))
         print("Response:", response)
-        logs = f"Транзакция отправлена: https://solscan.io/tx/{response['result']}?cluster=dev"
+        logs = f"Транзакция отправлена: https://solscan.io/tx/{response['result']}?cluster=devnet"
 
     return logs
-
-
-if __name__ == "__main__":
-
-    print(asyncio.run(call_smart_contract_get()))
-#     print(asyncio.run(call_smart_contract_set(42)))
